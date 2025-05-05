@@ -229,7 +229,6 @@
     const chatMessages = document.getElementById('chat-messages');
     const userInput = document.getElementById('user-input');
     const chatHistory = document.getElementById('chat-history');
-    let historyCount = 0;
 
     function appendMessage(text, sender, buttons = false) {
       const msg = document.createElement('div');
@@ -268,6 +267,32 @@
       }
     }
 
+    function typeBotMessage(text) {
+      // Create a placeholder "typing..." bubble
+      const typingMsg = document.createElement('div');
+      typingMsg.className = 'message bot';
+      typingMsg.textContent = 'Typing...';
+      chatMessages.appendChild(typingMsg);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+
+      // Simulate short delay before typing starts
+      setTimeout(() => {
+        let index = 0;
+        typingMsg.textContent = ''; // Clear "Typing..." to start real text
+
+        function typeChar() {
+          if (index < text.length) {
+            typingMsg.textContent += text.charAt(index);
+            index++;
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+            setTimeout(typeChar, 20); // Typing speed
+          }
+        }
+
+        typeChar();
+      }, 500); // Delay before bot starts "typing"
+    }
+
     async function sendMessage(msgText) {
       const message = msgText || userInput.value.trim();
       if (!message) return;
@@ -286,7 +311,7 @@
         if (data.buttons) {
           appendMessage(data.message, 'bot', true);
         } else {
-          appendMessage(data.response || data.message, 'bot');
+          typeBotMessage(data.response || data.message);
         }
       } catch (err) {
         appendMessage("⚠️ Couldn't reach the server.", 'bot');
@@ -302,7 +327,7 @@
           body: JSON.stringify({ message: value })
         });
         const data = await res.json();
-        appendMessage(data.response, 'bot');
+        typeBotMessage(data.response);
       } catch {
         appendMessage("⚠️ Failed to fetch AI response.", 'bot');
       }
